@@ -1,35 +1,29 @@
-import {useState, useEffect} from 'react';
+import {useState, useEffect, useCallback} from 'react';
 import {Input, InputBase, Combobox, useCombobox, ScrollArea, Text} from '@mantine/core';
+import {getTimePeriodsByInterval} from './utils'
 
 
-const timePeriodOptions = [
-  "Last 1 minute",
-  "Last 5 minutes",
-  "Last 15 minutes",
-  "Last 30 minutes",
-  "Last 1 hour",
-  "Last 3 hours",
-  "Last 6 hours",
-  "Last 12 hours",
-  "Last 24 hours",
-  "Last 2 days",
-  "Last 7 days",
-  "Last 14 days",
-  "Last 30 days",
-];
-
-export default function PeriodComboBox({onChange, error}) {
-  const [periodValue, setPeriodValue] = useState(null);
+export default function PeriodComboBox({setTimePeriod, timePeriod, error, interval}) {
+  const [timePeriodOptions, setTimePeriodOptions] = useState([]);
   const combobox = useCombobox({
     onDropdownClose: () => combobox.resetSelectedOption(),
   });
-  console.log("error", error);
 
-  const comboBoxOptions = timePeriodOptions.map((item) => (
-    <Combobox.Option value={item} key={item}>
-      {item}
-    </Combobox.Option>
-  ));
+  const handlePeriodChange = useCallback((val) => {
+    setTimePeriod(val);
+    combobox.closeDropdown();
+  }, [combobox, setTimePeriod])
+
+  useEffect(() => {
+    const options = getTimePeriodsByInterval(interval); // Fetch options based on interval
+    setTimePeriodOptions(
+      options.map((value, index) => (
+        <Combobox.Option key={index} value={value}>
+          {value}
+        </Combobox.Option>
+      ))
+    );
+  }, [interval]);
 
   return (
     <div>
@@ -37,11 +31,7 @@ export default function PeriodComboBox({onChange, error}) {
         label="Time Period"
         store={combobox}
         withAsterisk
-        onOptionSubmit={(val) => {
-          setPeriodValue(val);
-          onChange(val);
-          combobox.closeDropdown();
-        }}
+        onOptionSubmit={handlePeriodChange}
       >
         <Combobox.Target>
           <InputBase
@@ -54,14 +44,14 @@ export default function PeriodComboBox({onChange, error}) {
             onClick={() => combobox.toggleDropdown()}
             error={!!error}
           >
-            {periodValue || <Input.Placeholder>Pick value</Input.Placeholder>}
+            {timePeriod || <Input.Placeholder>Pick value</Input.Placeholder>}
           </InputBase>
         </Combobox.Target>
 
         <Combobox.Dropdown>
           <Combobox.Options>
             <ScrollArea.Autosize type="scroll" mah={200}>
-              {comboBoxOptions}
+              {timePeriodOptions}
             </ScrollArea.Autosize>
           </Combobox.Options>
         </Combobox.Dropdown>
