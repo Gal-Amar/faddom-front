@@ -8,7 +8,6 @@ export default function PeriodComboBox({setTimePeriod, timePeriod, error, interv
   const combobox = useCombobox({
     onDropdownClose: () => combobox.resetSelectedOption(),
   });
-
   const handlePeriodChange = useCallback((val) => {
     setTimePeriod(val);
     combobox.closeDropdown();
@@ -37,7 +36,7 @@ export default function PeriodComboBox({setTimePeriod, timePeriod, error, interv
           <InputBase
             component="button"
             type="button"
-            description={"Specify the total time period (in seconds) to display on the chart."}
+            description={"Specify the total time period to display on the chart."}
             pointer
             rightSection={<Combobox.Chevron/>}
             rightSectionPointerEvents="none"

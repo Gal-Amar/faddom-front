@@ -1,10 +1,14 @@
 import {useCallback, useState} from "react";
-import {Button, TextInput, Title, Tooltip, Text} from '@mantine/core';
+
+import {Button, TextInput, Title, Tooltip, Text, Alert} from '@mantine/core';
 import PeriodComboBox from "./PeriodComboBox";
 import {IconQuestionMark} from '@tabler/icons-react';
 import CpuDataChart from "./DataChart";
 import ExplanationPaper from "./ExplanationPepar";
 import IntervalInput from "./IntervalInput";
+import {IconInfoCircle} from '@tabler/icons-react';
+
+import {timePeriods} from "./utils";
 
 
 function App() {
@@ -17,39 +21,9 @@ function App() {
     interval: null,
     timePeriod: null,
     ipAddress: null,
+    data: null,
   });
-  const [data, setData] = useState([
-    {
-      date: 'Mar 22',
-      Apples: 2890,
-      Oranges: 2338,
-      Tomatoes: 2452,
-    },
-    {
-      date: 'Mar 23',
-      Apples: 2756,
-      Oranges: 2103,
-      Tomatoes: 2402,
-    },
-    {
-      date: 'Mar 24',
-      Apples: 3322,
-      Oranges: 986,
-      Tomatoes: 1821,
-    },
-    {
-      date: 'Mar 25',
-      Apples: 3470,
-      Oranges: 2108,
-      Tomatoes: 2809,
-    },
-    {
-      date: 'Mar 26',
-      Apples: 3129,
-      Oranges: 1726,
-      Tomatoes: 2290,
-    },
-  ]);
+  const [data, setData] = useState([]);
 
 
   const handleTimePeriodChange = useCallback((value) => {
@@ -58,8 +32,11 @@ function App() {
       interval: prevState.timePeriod === '' ? prevState.interval : 30,
       timePeriod: value,
     }));
-    error.timePeriod = null;
-  }, []);
+    setError(prevState => ({
+      ...prevState,
+      timePeriod: null,
+    }))
+  }, [error]);
 
   const handleIntervalChange = useCallback((interval) => {
     setSubmittedValues((prevState) => ({
@@ -67,7 +44,10 @@ function App() {
       timePeriod: prevState.interval === 30 ? prevState.timePeriod : '',
       interval: interval,
     }));
-    error.interval = null;
+    setError(prevState => ({
+      ...prevState,
+      interval: null,
+    }))
   }, []);
 
   const handleIPAddressChange = useCallback((ipAddress) => {
@@ -75,7 +55,10 @@ function App() {
       ...prevState,
       ipAddress: ipAddress,
     }));
-    error.ipAddress = null;
+    setError(prevState => ({
+      ...prevState,
+      ipAddress: null,
+    }))
   }, []);
 
   const isFormValid = useCallback(
@@ -104,22 +87,35 @@ function App() {
         ipAddress: isIPAddressValid ? null : 'Invalid IP address',
       }));
       return isInitialize && isIntervalValid && isIPAddressValid;
-    }, [error, submittedValues]);
+    }, [submittedValues]);
 
-  const handleSubmit = useCallback((e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
-    console.log("submitted", submittedValues);
+    if (isFormValid()) {
+      const roundedPeriodValue = submittedValues.interval % 60 === 0 || submittedValues.interval < 60 ? submittedValues.interval : submittedValues.interval - submittedValues.interval % 60;
+      try {
+        const url = `http://127.0.0.1:8000/?period=${encodeURIComponent(roundedPeriodValue)}&delta=${encodeURIComponent(timePeriods[submittedValues.timePeriod])}&instance_ip=${encodeURIComponent(submittedValues.ipAddress)}`;
+        const response = await fetch(url);
+        const data = await response.json(); // Parse the JSON response
+        console.log(data);
+        if (data.data) {
+          setData(data.data.Datapoints);
+          setError(prevState => ({
+            ...prevState,
+            data: null
+          }));
+        } else {
+          setError(prevState => ({
+            ...prevState,
+            data: data.error && data.error.includes('InvalidParameterCombination') ? data.error : error.message
+          }));
+        }
 
-    const roundedPeriodValue = submittedValues.interval % 60 === 0 || submittedValues.interval < 60 ? submittedValues.interval : submittedValues.interval - submittedValues.interval % 60;
-    setSubmittedValues(prevState => ({
-      ...prevState,
-      interval: roundedPeriodValue,
-    }))
-    if (!isFormValid()) {
-      console.log("invalid form");
+      } catch (error) {
+
+      }
     }
-    // setSubmittedValues(JSON.stringify(setSubmittedValues, null, 2));
-  }, [submittedValues])
+  }, [isFormValid, submittedValues])
 
 
   return (
@@ -128,7 +124,6 @@ function App() {
       <Title order={1} mb={"20px"}>AWS instance CPU usage</Title>
       <div className={"form-grid"}>
         <form className={"form"} onSubmit={handleSubmit}>
-          debugger;
           <IntervalInput
             setInterval={handleIntervalChange}
             interval={submittedValues.interval}
@@ -169,8 +164,11 @@ function App() {
         </form>
         <ExplanationPaper/>
       </div>
-      <CpuDataChart data={data}/>
-
+      {!error.data && <CpuDataChart data={data} error={error.data} timePeriod={submittedValues.timePeriod}/>}
+      {error.data &&
+        <Alert mt={"20px"} variant="outline" color="red" title="error" icon={<IconInfoCircle/>}>
+          {error.data}
+        </Alert>}
     </div>
   );
 }

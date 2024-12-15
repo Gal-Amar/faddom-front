@@ -1,11 +1,11 @@
 const timePeriodsForIntervals = {
   TIME_PERIOD_FOR_INTERVAL_UNDER_60_SEC: ["Last 1 minute", "Last 5 minutes", "Last 15 minutes", "Last 30 minutes", "Last 1 hour", "Last 3 hours"],
   TIME_PERIOD_FOR_MIN_INTERVAL_60_SEC: ["Last 6 hours", "Last 12 hours", "Last 24 hours", "Last 2 days"],
-  TIME_PERIOD_FOR_MIN_INTERVAL_300_SEC: ["Last 7 days", "Last 14 days", "Last 15 days", "Last 30 days"],
-  TIME_PERIOD_FOR_MIN_INTERVAL_3600_SEC: ["Last 90 days"],
+  TIME_PERIOD_FOR_MIN_INTERVAL_300_SEC: ["Last 7 days", "Last 14 days", "Last 15 days"],
+  TIME_PERIOD_FOR_MIN_INTERVAL_3600_SEC: ["Last 30 days", "Last 60 days"],
 }
 
-const timePeriods = {
+export const timePeriods = {
   "Last 1 minute": 60,
   "Last 5 minutes": 300,
   "Last 15 minutes": 900,
